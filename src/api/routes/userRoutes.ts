@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", verifyToken, userController.getAllUsers);
 
-router.get("/:id", userController.getUser);
+router.get("/:id", verifyToken, userController.getUser);
 
 router.put("/:id/update-profile", verifyToken, userController.updateProfile);
 

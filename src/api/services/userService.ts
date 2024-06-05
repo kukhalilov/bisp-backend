@@ -2,6 +2,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import * as userDal from "../../db/dataAccess/userDal.js";
 import User from "../../db/models/User.js";
+import Notification from "../../db/models/Notification.js";
+import { sendEmail } from "../../utilities/email.js";
 
 export const loginUser = async (email: string, password: string) => {
   const user = await User.findOne({ email });
@@ -20,7 +22,7 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 export const registerUser = async (userData: any) => {
-  const { emailPresent } = await userDal.registerUser(userData);
+  const emailPresent = await userDal.checkIfUserExists(userData.email);
 
   if (emailPresent) {
     throw new Error("An error occurred while registering user");
@@ -34,10 +36,23 @@ export const registerUser = async (userData: any) => {
     throw new Error("An error occurred while registering user");
   }
 
+  const notification = new Notification({
+    userId: user.id,
+    content: `Congratulations, You have successfully registered!`,
+  });
+
+  await notification.save();
+
+  await sendEmail(user!.email, 'Successful Registration', notification.content);
+
   return "User registered successfully";
 };
 
 export const updateUserProfile = async (userId: string, updatedData: any) => {
+  if (updatedData.password) {
+    updatedData.password = bcrypt.hashSync(updatedData.password, 10);
+  }
+
   const result = await userDal.updateUser(userId, updatedData);
 
   if (!result) {

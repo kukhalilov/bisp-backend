@@ -1,5 +1,7 @@
+import { sendEmail } from "../../utilities/email.js";
 import Appointment from "../models/Appointment.js";
 import Notification from "../models/Notification.js";
+import User from "../models/User.js";
 
 export const fetchAllAppointments = async (search?: string) => {
   const keyword = search
@@ -28,6 +30,11 @@ export const saveAppointment = async (
     userNotification.save(),
     doctorNotification.save(),
   ]);
+
+  const user = await User.findById(appointmentData.userId);
+  const doctor = await User.findById(appointmentData.doctorId);
+  await sendEmail(user!.email, 'Appointment Booked', userNotification.content);
+  await sendEmail(doctor!.email, 'Appointment Booked', doctorNotification.content);
 
   return appointment;
 };
@@ -58,6 +65,11 @@ export const markAppointmentAsCompleted = async (appointmentId: string) => {
   });
 
   await Promise.all([userNotification.save(), doctorNotification.save()]);
+
+  const user = await User.findById(appointment.userId);
+  const doctor = await User.findById(appointment.doctorId);
+  await sendEmail(user!.email, 'Appointment Completed', userNotification.content);
+  await sendEmail(doctor!.email, 'Appointment Completed', doctorNotification.content);
 
   return appointment;
 };

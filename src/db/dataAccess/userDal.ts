@@ -29,8 +29,10 @@ export const updateUser = async (userId: string, updatedData: any) => {
   return "User updated successfully";
 };
 
-export const registerUser = async (userData: any) => {
-  const emailPresent = await User.findOne({ email: userData.email });
+export const checkIfUserExists = async (email: string) => {
+  const user = await User.findOne({ email: email });
 
-  return { emailPresent };
+  const emailPresent = user ? true : false;
+
+  return emailPresent;
 };

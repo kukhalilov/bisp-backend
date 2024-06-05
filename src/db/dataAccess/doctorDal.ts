@@ -2,6 +2,7 @@ import Doctor from "../models/Doctor.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import Appointment from "../models/Appointment.js";
+import { sendEmail } from "../../utilities/email.js";
 
 export const getAllDoctors = async () => {
   return Doctor.find().populate("id").where("isDoctor").equals(true);
@@ -30,10 +31,11 @@ export const applyForDoctor = async (userId: string, formDetails: any) => {
 };
 
 export const acceptDoctorApplication = async (userId: string) => {
-  await User.findByIdAndUpdate(userId, {
+  const user = await User.findByIdAndUpdate(userId, {
     isDoctor: true,
     status: "accepted",
   });
+
   await Doctor.findOneAndUpdate({ id: userId }, { isDoctor: true });
 
   const notification = new Notification({
@@ -42,6 +44,8 @@ export const acceptDoctorApplication = async (userId: string) => {
   });
 
   await notification.save();
+
+  await sendEmail(user!.email, 'Doctor Application Accepted', notification.content);
 
   return "Doctor application accepted successfully, notification sent";
 };
@@ -60,6 +64,8 @@ export const rejectDoctorApplication = async (userId: string) => {
   });
 
   await notification.save();
+
+  await sendEmail(user!.email, 'Doctor Application Rejected', notification.content);
 
   return "Doctor application rejected successfully, rejection notification sent";
 };
