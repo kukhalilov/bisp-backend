@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get("/", doctorController.getAllDoctors);
 
-router.get("/pending-doctors", verifyToken, doctorController.getNotDoctors);
+router.get("/pending-doctors", verifyToken, doctorController.getPendingDoctors);
 
 router.post("/apply/:id", verifyToken, doctorController.applyForDoctor);
 

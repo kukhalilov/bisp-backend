@@ -2,12 +2,44 @@ import User from "../models/User.js";
 import Doctor from "../models/Doctor.js";
 import Appointment from "../models/Appointment.js";
 
-export const getUserById = async (userId: string) => {
-  return User.findById(userId).select("-password");
+export const getAllUsers = async (
+  page: number,
+  pageSize: number = 10,
+  sort: string,
+  search: string
+) => {
+  let sortParams: Record<string, any> = {};
+  if (sort) {
+    const [field, order] = sort.split(",");
+    sortParams = { [field]: order === "desc" ? -1 : 1 };
+  }
+
+  let searchParams: Record<string, any> = {};
+  if (search) {
+    const words = search.split(" ");
+    const regex = new RegExp("\\b" + words.join("|\\b"), "i");
+    const users = await User.find({
+      $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+    });
+    const userIds = users.map((user) => user._id);
+    searchParams = { _id: { $in: userIds } };
+  }
+
+  const totalDocs = await User.countDocuments(searchParams);
+
+  const totalPages = Math.ceil(totalDocs / pageSize);
+
+  const users = await User.find(searchParams)
+    .select("-password")
+    .sort(sortParams)
+    .skip((page - 1) * pageSize)
+    .limit(pageSize);
+
+  return { data: users, totalPages };
 };
 
-export const getAllUsers = async (excludeUserId: string) => {
-  return User.find({ _id: { $ne: excludeUserId } }).select("-password");
+export const getUserById = async (userId: string) => {
+  return User.findById(userId).select("-password");
 };
 
 export const deleteUser = async (userId: string) => {

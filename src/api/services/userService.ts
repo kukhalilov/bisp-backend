@@ -43,7 +43,7 @@ export const registerUser = async (userData: any) => {
 
   await notification.save();
 
-  await sendEmail(user!.email, 'Successful Registration', notification.content);
+  await sendEmail(user!.email, "Successful Registration", notification.content);
 
   return "User registered successfully";
 };
@@ -72,9 +72,13 @@ export const getUserById = async (userId: string) => {
   return user;
 };
 
-export const getAllUsers = async (excludeUserId: string) => {
-  const users = await userDal.getAllUsers(excludeUserId);
-  return users;
+export const getAllUsers = async (
+  page: number,
+  pageSize: number,
+  sort: string,
+  search: string
+) => {
+  return userDal.getAllUsers(page, pageSize, sort, search);
 };
 
 export const deleteUser = async (userId: string) => {

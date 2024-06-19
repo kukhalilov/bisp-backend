@@ -12,10 +12,14 @@ export const getUser = async (req: Request, res: Response) => {
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await userService.getAllUsers(
-      req.query.excludeUserId as string
+    const { page, pageSize, sort, search } = req.query;
+    const clinics = await userService.getAllUsers(
+      Number(page),
+      Number(pageSize),
+      sort as string,
+      search as string
     );
-    return res.send(users);
+    res.send(clinics);
   } catch (error: any) {
     res.status(500).send(error.message);
   }

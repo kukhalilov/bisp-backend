@@ -1,11 +1,21 @@
 import * as doctorDal from "../../db/dataAccess/doctorDal.js";
 
-export const getAllDoctors = async () => {
-  return doctorDal.getAllDoctors();
+export const getAllDoctors = async (
+  page: number,
+  pageSize: number,
+  sort: string,
+  search: string
+) => {
+  return doctorDal.getAllDoctors(page, pageSize, sort, search);
 };
 
-export const getNotDoctors = async () => {
-  return doctorDal.getNotDoctors();
+export const getPendingDoctors = async (
+  page: number,
+  pageSize: number,
+  sort: string,
+  search: string
+) => {
+  return doctorDal.getPendingDoctors(page, pageSize, sort, search);
 };
 
 export const applyForDoctor = async (userId: string, formDetails: any) => {

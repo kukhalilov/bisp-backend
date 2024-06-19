@@ -10,6 +10,9 @@ const doctorSchema = new Schema({
     type: String,
     required: true,
   },
+  about: {
+    type: String,
+  },
   experience: {
     type: Number,
     required: true,
@@ -17,6 +20,13 @@ const doctorSchema = new Schema({
   fee: {
     type: Number,
     required: true,
+  },
+  clinic: {
+    type: Schema.Types.ObjectId,
+    ref: "Clinic",
+  },
+  location: {
+    type: String,
   },
   isDoctor: {
     type: Boolean,

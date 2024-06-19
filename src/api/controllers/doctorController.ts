@@ -3,16 +3,28 @@ import * as doctorService from "../services/doctorService.js";
 
 export const getAllDoctors = async (req: Request, res: Response) => {
   try {
-    const doctors = await doctorService.getAllDoctors();
+    const { page, pageSize, sort, search } = req.query;
+    const doctors = await doctorService.getAllDoctors(
+      Number(page),
+      Number(pageSize),
+      sort as string,
+      search as string
+    );
     res.send(doctors);
   } catch (error: any) {
     res.status(500).send(error.message);
   }
 };
 
-export const getNotDoctors = async (req: Request, res: Response) => {
+export const getPendingDoctors = async (req: Request, res: Response) => {
   try {
-    const nonDoctors = await doctorService.getNotDoctors();
+    const { page, pageSize, sort, search } = req.query;
+    const nonDoctors = await doctorService.getPendingDoctors(
+      Number(page),
+      Number(pageSize),
+      sort as string,
+      search as string
+    );
     res.send(nonDoctors);
   } catch (error: any) {
     res.status(500).send(error.message);

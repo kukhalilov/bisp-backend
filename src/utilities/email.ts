@@ -55,7 +55,7 @@ export const sendEmail = async (to: string, subject: string, body: string) => {
   });
 
   const mailOptions = {
-    from: process.env.GMAIL,
+    from: process.env.EMAIL,
     to,
     subject,
     html: email,
@@ -63,6 +63,7 @@ export const sendEmail = async (to: string, subject: string, body: string) => {
 
   try {
     const r = await transporter.sendMail(mailOptions);
+    console.log(r);
   } catch (error) {
     console.error("Error sending email: ", error);
   }

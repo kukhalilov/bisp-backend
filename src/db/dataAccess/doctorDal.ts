@@ -3,15 +3,140 @@ import User from "../models/User.js";
 import Notification from "../models/Notification.js";
 import Appointment from "../models/Appointment.js";
 import { sendEmail } from "../../utilities/email.js";
+import mongoose from "mongoose";
 
-export const getAllDoctors = async () => {
-  return Doctor.find().populate("id").where("isDoctor").equals(true);
+export const getAllDoctors = async (
+  page: number,
+  pageSize: number = 10,
+  sort: string,
+  search: string
+) => {
+  let sortParams: Record<string, any> = {};
+  let field = "";
+  let order = "";
+  if (sort) {
+    [field, order] = sort.split(",");
+    sortParams = { [field]: order === "desc" ? -1 : 1 };
+  }
+
+  let userIds: mongoose.Types.ObjectId[] = [];
+  if (search) {
+    const words = search.split(" ");
+    const regex = new RegExp("\\b" + words.join("|\\b"), "i");
+    const users = await User.find({
+      $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+    });
+    userIds = users.map((user) => user._id);
+  }
+
+  if (search && userIds.length === 0) {
+    return { data: [], totalPages: 0 };
+  }
+
+  const totalDocs = await Doctor.countDocuments({
+    ...(userIds.length > 0 ? { id: { $in: userIds } } : {}),
+    isDoctor: true,
+  });
+
+  const totalPages = Math.ceil(totalDocs / pageSize);
+
+  let doctors = await Doctor.find({
+    ...(userIds.length > 0 ? { id: { $in: userIds } } : {}),
+    isDoctor: true,
+  })
+    .populate("id")
+    .skip((page - 1) * pageSize)
+    .limit(pageSize);
+
+  if (field !== "" && order !== "") {
+    doctors.sort((a, b) => {
+      let aObj = a.toObject();
+      let bObj = b.toObject();
+      let aValue = aObj.hasOwnProperty(field)
+        ? (aObj as any)[field]
+        : (aObj.id as any)[field];
+      let bValue = bObj.hasOwnProperty(field)
+        ? (bObj as any)[field]
+        : (bObj.id as any)[field];
+      if (typeof aValue === "string") {
+        return order === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else if (typeof aValue === "number") {
+        return order === "asc" ? aValue - bValue : bValue - aValue;
+      }
+      return 0;
+    });
+  }
+
+  return { data: doctors, totalPages };
 };
 
-export const getNotDoctors = async () => {
-  return Doctor.find({
+export const getPendingDoctors = async (
+  page: number,
+  pageSize: number = 10,
+  sort: string,
+  search: string
+) => {
+  let sortParams: Record<string, any> = {};
+  let field = "";
+  let order = "";
+  if (sort) {
+    [field, order] = sort.split(",");
+    sortParams = { [field]: order === "desc" ? -1 : 1 };
+  }
+
+  let userIds: mongoose.Types.ObjectId[] = [];
+  if (search) {
+    const words = search.split(" ");
+    const regex = new RegExp("\\b" + words.join("|\\b"), "i");
+    const users = await User.find({
+      $or: [{ firstName: { $regex: regex } }, { lastName: { $regex: regex } }],
+    });
+    userIds = users.map((user) => user._id);
+  }
+
+  if (search && userIds.length === 0) {
+    return { data: [], totalPages: 0 };
+  }
+
+  const totalDocs = await Doctor.countDocuments({
+    ...(userIds.length > 0 ? { id: { $in: userIds } } : {}),
     isDoctor: false,
-  }).populate("id");
+  });
+
+  const totalPages = Math.ceil(totalDocs / pageSize);
+
+  let doctors = await Doctor.find({
+    ...(userIds.length > 0 ? { id: { $in: userIds } } : {}),
+    isDoctor: false,
+  })
+    .populate("id")
+    .skip((page - 1) * pageSize)
+    .limit(pageSize);
+
+  if (field !== "" && order !== "") {
+    doctors.sort((a, b) => {
+      let aObj = a.toObject();
+      let bObj = b.toObject();
+      let aValue = aObj.hasOwnProperty(field)
+        ? (aObj as any)[field]
+        : (aObj.id as any)[field];
+      let bValue = bObj.hasOwnProperty(field)
+        ? (bObj as any)[field]
+        : (bObj.id as any)[field];
+      if (typeof aValue === "string") {
+        return order === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else if (typeof aValue === "number") {
+        return order === "asc" ? aValue - bValue : bValue - aValue;
+      }
+      return 0;
+    });
+  }
+
+  return { data: doctors, totalPages };
 };
 
 export const applyForDoctor = async (userId: string, formDetails: any) => {
@@ -45,7 +170,11 @@ export const acceptDoctorApplication = async (userId: string) => {
 
   await notification.save();
 
-  await sendEmail(user!.email, 'Doctor Application Accepted', notification.content);
+  await sendEmail(
+    user!.email,
+    "Doctor Application Accepted",
+    notification.content
+  );
 
   return "Doctor application accepted successfully, notification sent";
 };
@@ -65,7 +194,11 @@ export const rejectDoctorApplication = async (userId: string) => {
 
   await notification.save();
 
-  await sendEmail(user!.email, 'Doctor Application Rejected', notification.content);
+  await sendEmail(
+    user!.email,
+    "Doctor Application Rejected",
+    notification.content
+  );
 
   return "Doctor application rejected successfully, rejection notification sent";
 };
