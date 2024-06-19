@@ -20,6 +20,7 @@ export const bookAppointment = async (req: Request, res: Response) => {
       {
         date: req.body.date,
         time: req.body.time,
+        duration: req.body.duration,
         doctorId: req.body.doctorId,
         userId: req.body.userId,
       },

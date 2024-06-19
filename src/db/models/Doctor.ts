@@ -32,6 +32,22 @@ const doctorSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  appointments: [
+    {
+      date: {
+        type: Date,
+        required: true,
+      },
+      time: {
+        type: String,
+        required: true,
+      },
+      duration: {
+        type: Number,
+        required: true,
+      }
+    },
+  ],
 });
 
 const Doctor = model("Doctor", doctorSchema);

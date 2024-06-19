@@ -1,5 +1,6 @@
 import { sendEmail } from "../../utilities/email.js";
 import Appointment from "../models/Appointment.js";
+import Doctor from "../models/Doctor.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 
@@ -21,20 +22,35 @@ export const saveAppointment = async (
   userNotificationData: any,
   doctorNotificationData: any
 ) => {
+  console.log(appointmentData);
   const appointment = new Appointment(appointmentData);
   const userNotification = new Notification(userNotificationData);
   const doctorNotification = new Notification(doctorNotificationData);
+
+  const doctor = await Doctor.findById(appointmentData.doctorId);
+  if (!doctor) {
+    throw new Error("Doctor not found");
+  }
+  doctor.appointments.push({
+    date: appointmentData.date,
+    time: appointmentData.time,
+    duration: appointmentData.duration,
+  });
 
   await Promise.all([
     appointment.save(),
     userNotification.save(),
     doctorNotification.save(),
+    doctor.save(),
   ]);
 
   const user = await User.findById(appointmentData.userId);
-  const doctor = await User.findById(appointmentData.doctorId);
-  await sendEmail(user!.email, 'Appointment Booked', userNotification.content);
-  await sendEmail(doctor!.email, 'Appointment Booked', doctorNotification.content);
+  await sendEmail(user!.email, "Appointment Booked", userNotification.content);
+  await sendEmail(
+    doctor.id.email,
+    "Appointment Booked",
+    doctorNotification.content
+  );
 
   return appointment;
 };
@@ -68,8 +84,16 @@ export const markAppointmentAsCompleted = async (appointmentId: string) => {
 
   const user = await User.findById(appointment.userId);
   const doctor = await User.findById(appointment.doctorId);
-  await sendEmail(user!.email, 'Appointment Completed', userNotification.content);
-  await sendEmail(doctor!.email, 'Appointment Completed', doctorNotification.content);
+  await sendEmail(
+    user!.email,
+    "Appointment Completed",
+    userNotification.content
+  );
+  await sendEmail(
+    doctor!.email,
+    "Appointment Completed",
+    doctorNotification.content
+  );
 
   return appointment;
 };
